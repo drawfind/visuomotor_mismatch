@@ -8,15 +8,15 @@ def main():
     experiment()
 
     
-# Create a population code with N neurons, encoding the variable x
-def code(x, N):
+# Create a population code with N neurons, centered at preferred_x, encoding the variable x
+def code(x, preferred_x, N):
     xmin = -1.0
     xrange = 2.0
     sqrsigma = (xrange/5)**2
     code = np.zeros(N)
     
     for i in range(N):
-        mean = xmin + i * xrange / (N - 1)  
+        mean = xmin + i * xrange / (N - 1) - preferred_x
         val = math.exp(- (x - mean)**2 / (2 * sqrsigma))
         code[i] = val
             
@@ -26,9 +26,9 @@ def code(x, N):
 # Compute the activation of Layer 2/3 neurons
 # given the speed of observed visual flow (observed_flow)
 # and the speed predicted from locomotion (motor_based_predicted_flow)
-def layer_activation(motor_based_predicted_flow, observed_flow, N):
+def layer_activation(motor_based_predicted_flow, observed_flow, preferred_v, N):
     external_motion = observed_flow - motor_based_predicted_flow
-    env_code = code(external_motion,N)
+    env_code = code(external_motion, preferred_v, N)
     return env_code
 
 
@@ -38,11 +38,13 @@ def experiment():
     num_trials = 10 # Number of different speed values
     threshold = 0.05 # Threshold for defining dMM and hMM neurons
     num_pc = 3 # Number of different population codes
+    preferred_v = 0.76 # Preferred velocity in x-direction of the population code
     
     neuron_ind = [i for i in range(1, N + 1)]
     motor_flow = np.zeros(num_trials*num_pc)
     sum_mismatch = np.zeros(N*num_pc)
     all_mismatch = []
+    preferred_vec = np.array([preferred_v, 0])
 
     # Create basis vectors for the 1-d projections of the different population codes
     basis_vec = []
@@ -51,7 +53,7 @@ def experiment():
         basis_vec.append([math.cos(phi), math.sin(phi)])
     
     for m in range(num_trials):
-        speed = m*0.05 # Speed predicted from locomotion
+        speed = m*0.5/num_trials # Speed predicted from locomotion
         v_vec = np.array([speed, 0])
         motor_flow[m] = speed
         
@@ -59,11 +61,14 @@ def experiment():
             
             # Compute projection of v_vec onto basis vector
             v = v_vec.dot(basis_vec[pc])
+
+            # Compute projection of preferred_vec onto basis vector
+            preferred_proj = preferred_vec.dot(basis_vec[pc])
             
             # Code1: Visual flow matches motor-induced flow
-            env_code1 = layer_activation(v,v,N)
+            env_code1 = layer_activation(v,v,preferred_proj,N)
             # Code2: Visual flow is zero
-            env_code2 = layer_activation(v,0,N)
+            env_code2 = layer_activation(v,0,preferred_proj,N)
 
             mismatch = env_code2 - env_code1
 
@@ -112,7 +117,7 @@ def experiment():
     plt.grid(True)
 
     fname = 'dMM_speed_3pcs.eps'
-    #plt.savefig(fname, format='eps')
+    plt.savefig(fname, format='eps')
     plt.show()
 
     # Fit linear model to hMM data
@@ -132,7 +137,7 @@ def experiment():
     plt.grid(True)
     
     fname = 'hMM_speed_3pcs.eps'
-    #plt.savefig(fname, format='eps')
+    plt.savefig(fname, format='eps')
     plt.show()
 
 
