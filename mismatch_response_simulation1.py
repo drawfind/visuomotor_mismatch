@@ -37,7 +37,7 @@ def experiment():
     N = 100 # Number of neurons in a population code
     num_trials = 10 # Number of different speed values
     threshold = 0.05 # Threshold for defining dMM and hMM neurons
-    preferred_v = 0.76
+    preferred_v = 0.76 # Preferred velocity of the population code
     
     neuron_ind = [i for i in range(1, N + 1)]
     motor_flow = np.zeros(num_trials)
