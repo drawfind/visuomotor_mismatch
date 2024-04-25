@@ -8,15 +8,15 @@ def main():
     experiment()
 
     
-# Create a population code with N neurons, encoding the variable x
-def code(x, N):
+# Create a population code with N neurons, centered at preferred_x, encoding the variable x
+def code(x, preferred_x, N):
     xmin = -1.0
     xrange = 2.0
     sqrsigma = (xrange/5)**2
     code = np.zeros(N)
     
     for i in range(N):
-        mean = xmin + i * xrange / (N - 1)  
+        mean = xmin + i * xrange / (N - 1) - preferred_x
         val = math.exp(- (x - mean)**2 / (2 * sqrsigma))
         code[i] = val
             
@@ -26,9 +26,9 @@ def code(x, N):
 # Compute the activation of Layer 2/3 neurons
 # given the speed of observed visual flow (observed_flow)
 # and the speed predicted from locomotion (motor_based_predicted_flow)
-def layer_activation(motor_based_predicted_flow, observed_flow, N):
+def layer_activation(motor_based_predicted_flow, observed_flow, preferred_v, N):
     external_motion = observed_flow - motor_based_predicted_flow
-    env_code = code(external_motion,N)
+    env_code = code(external_motion, preferred_v, N)
     return env_code
 
 
@@ -37,6 +37,7 @@ def experiment():
     N = 100 # Number of neurons in a population code
     num_trials = 10 # Number of different speed values
     threshold = 0.05 # Threshold for defining dMM and hMM neurons
+    preferred_v = 0.76
     
     neuron_ind = [i for i in range(1, N + 1)]
     motor_flow = np.zeros(num_trials)
@@ -44,12 +45,12 @@ def experiment():
     all_mismatch = []
     
     for m in range(num_trials):
-        motor_flow[m] = m*0.05 # Speed predicted from locomotion
+        motor_flow[m] = m*0.5/num_trials # Speed predicted from locomotion
 
         # Code1: Visual flow matches motor-induced flow
-        env_code1 = layer_activation(motor_flow[m],motor_flow[m],N)
+        env_code1 = layer_activation(motor_flow[m], motor_flow[m], preferred_v, N)
         # Code2: Visual flow is zero
-        env_code2 = layer_activation(motor_flow[m],0,N)
+        env_code2 = layer_activation(motor_flow[m], 0, preferred_v, N)
 
         mismatch = env_code2 - env_code1
         sum_mismatch += mismatch
@@ -64,15 +65,15 @@ def experiment():
     plt.plot(preferred_speed, env_code1, linestyle='-', color='green')
     plt.scatter(preferred_speed, env_code2, label='Mismatch', color='red')
     plt.plot(preferred_speed, env_code2, linestyle='-', color='red')
-    plt.xlabel('Neuron (Preferred Speed)', fontsize=16)
-    plt.ylabel('Activation', fontsize=16)
+    plt.xlabel('Preferred Speed (Neuron) [Scaled between -1 and 1]', fontsize=16)
+    plt.ylabel('Activation [Scaled between 0 and 1]', fontsize=16)
     plt.xticks(fontsize=14)
     plt.yticks(fontsize=14)
     plt.legend(fontsize=16)
     plt.grid(True)
 
     fname = 'population_code.eps'
-    #plt.savefig(fname, format='eps')
+    plt.savefig(fname, format='eps')
     plt.show()
     
     # Compute dMM and hMM neurons
@@ -99,7 +100,23 @@ def experiment():
     X = sm.add_constant(dMM_mot)
     model = sm.RLM(dMM_mis, X, M=sm.robust.norms.TukeyBiweight())
     result = model.fit()
+    print("=====================")
+    print("dMM linear fit:")
+    slope = result.params[1]
+    slope_std_err = result.bse[1]
+    print("Slope: {:.2f} +/- {:.2f}".format(slope, slope_std_err))
 
+    dMM_mis_max_vel = []
+    for i in range(len(dMM_mot)):
+        if dMM_mot[i] == np.max(dMM_mot):
+            dMM_mis_max_vel.append(dMM_mis[i])
+            
+    dMM_mis_max_vel = np.array(dMM_mis_max_vel)
+    print(f"Min at max vel: {np.min(dMM_mis_max_vel):.2f}")
+    print(f"Max at max vel: {np.max(dMM_mis_max_vel):.2f}")
+    print(f"Std at max vel: {np.std(dMM_mis_max_vel):.2f}")
+    print("---------------------")
+    
     # Plot dMM data
     plt.figure(figsize=(8, 6))
     plt.scatter(dMM_mot, dMM_mis, label='dMM', marker='o', facecolors='none', edgecolors='brown')
@@ -108,18 +125,37 @@ def experiment():
     plt.ylabel('Mismatch Response', fontsize=16)
     plt.xticks(fontsize=14)
     plt.yticks(fontsize=14)
-    plt.title('dMM Neurons', fontsize=16)
+    plt.title('Population-Code Model: dMM Neurons', fontsize=16)
     plt.grid(True)
 
     fname = 'dMM_speed.eps'
-    #plt.savefig(fname, format='eps')
+    plt.savefig(fname, format='eps')
     plt.show()
 
     # Fit linear model to hMM data
     X = sm.add_constant(hMM_mot)
     model = sm.RLM(hMM_mis, X, M=sm.robust.norms.TukeyBiweight())
     result = model.fit()
+    print("hMM linear fit:")
+    slope = result.params[1]
+    slope_std_err = result.bse[1]
+    print("Slope: {:.2f} +/- {:.2f}".format(slope, slope_std_err))
 
+    hMM_mis_max_vel = []
+    for i in range(len(hMM_mot)):
+        if hMM_mot[i] == np.max(hMM_mot):
+            hMM_mis_max_vel.append(hMM_mis[i])
+
+    count_pos_mis = 0
+    for i in range(len(hMM_mis)):
+        if hMM_mis[i] > 0:
+            count_pos_mis += 1
+            
+    hMM_mis_max_vel = np.array(hMM_mis_max_vel)
+    print(f"Min at max vel: {np.min(hMM_mis_max_vel):.2f}")
+    print(f"Max at max vel: {np.max(hMM_mis_max_vel):.2f}")
+    print(f"Std at max vel: {np.std(hMM_mis_max_vel):.2f}")
+    
     # Plot hMM data
     plt.figure(figsize=(8, 6))
     plt.scatter(hMM_mot, hMM_mis, label='hMM', marker='o', facecolors='none', edgecolors='darkgreen')
@@ -128,11 +164,11 @@ def experiment():
     plt.ylabel('Mismatch Response', fontsize=16)
     plt.xticks(fontsize=14)
     plt.yticks(fontsize=14)
-    plt.title('hMM Neurons', fontsize=16)
+    plt.title('Population-Code Model: hMM Neurons', fontsize=16)
     plt.grid(True)
     
     fname = 'hMM_speed.eps'
-    #plt.savefig(fname, format='eps')
+    plt.savefig(fname, format='eps')
     plt.show()
 
 
