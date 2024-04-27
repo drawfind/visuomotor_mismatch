@@ -9,14 +9,14 @@ def main():
 
     
 # Create a population code with N neurons, centered at preferred_x, encoding the variable x
-def code(x, preferred_x, N):
+def code(x, x_offset, N):
     xmin = -1.0
     xrange = 2.0
     sqrsigma = (xrange/5)**2
     code = np.zeros(N)
     
     for i in range(N):
-        mean = xmin + i * xrange / (N - 1) - preferred_x
+        mean = xmin + i * xrange / (N - 1) - x_offset
         val = math.exp(- (x - mean)**2 / (2 * sqrsigma))
         code[i] = val
             
@@ -26,9 +26,9 @@ def code(x, preferred_x, N):
 # Compute the activation of Layer 2/3 neurons
 # given the speed of observed visual flow (observed_flow)
 # and the speed predicted from locomotion (motor_based_predicted_flow)
-def layer_activation(motor_based_predicted_flow, observed_flow, preferred_v, N):
+def layer_activation(motor_based_predicted_flow, observed_flow, v_offset, N):
     external_motion = observed_flow - motor_based_predicted_flow
-    env_code = code(external_motion, preferred_v, N)
+    env_code = code(external_motion, v_offset, N)
     return env_code
 
 
@@ -37,7 +37,7 @@ def experiment():
     N = 100 # Number of neurons in a population code
     num_trials = 10 # Number of different speed values
     threshold = 0.05 # Threshold for defining dMM and hMM neurons
-    preferred_v = 0.76 # Preferred velocity of the population code
+    v_offset = 0.76 # Offset of the velocity range of the population code
     
     neuron_ind = [i for i in range(1, N + 1)]
     motor_flow = np.zeros(num_trials)
@@ -48,9 +48,9 @@ def experiment():
         motor_flow[m] = m*0.5/num_trials # Speed predicted from locomotion
 
         # Code1: Visual flow matches motor-induced flow
-        env_code1 = layer_activation(motor_flow[m], motor_flow[m], preferred_v, N)
+        env_code1 = layer_activation(motor_flow[m], motor_flow[m], v_offset, N)
         # Code2: Visual flow is zero
-        env_code2 = layer_activation(motor_flow[m], 0, preferred_v, N)
+        env_code2 = layer_activation(motor_flow[m], 0, v_offset, N)
 
         mismatch = env_code2 - env_code1
         sum_mismatch += mismatch
@@ -58,14 +58,14 @@ def experiment():
         
 
     # Plot neural activation by preferred speed comparing match (env_code1) and mismatch (env_code2) conditions
-    preferred_speed = np.arange(0, N)/((N-1)/2)-1
+    preferred_speed = np.arange(0, N)/((N-1)/2) - 1 - v_offset
 
     plt.figure(figsize=(8, 6))
     plt.scatter(preferred_speed, env_code1, label='Match', marker='o', facecolors='none', edgecolors='green')
     plt.plot(preferred_speed, env_code1, linestyle='-', color='green')
     plt.scatter(preferred_speed, env_code2, label='Mismatch', color='red')
     plt.plot(preferred_speed, env_code2, linestyle='-', color='red')
-    plt.xlabel('Preferred Speed (Neuron) [Scaled between -1 and 1]', fontsize=16)
+    plt.xlabel('Preferred Speed Difference (Neuron) [Arbitrary unit]', fontsize=16)
     plt.ylabel('Activation [Scaled between 0 and 1]', fontsize=16)
     plt.xticks(fontsize=14)
     plt.yticks(fontsize=14)
