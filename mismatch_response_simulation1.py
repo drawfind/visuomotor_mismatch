@@ -92,9 +92,12 @@ def experiment():
                 hMM_mot.append(motor_flow[m])
                 hMM_mis.append(all_mismatch[m][i])
 
-    print('Number of dMM neurons:',len(dMM_mis)/num_trials)
-    print('Number of hMM neurons:',len(hMM_mis)/num_trials)
-    
+    nd = len(dMM_mis)/num_trials
+    nh = len(hMM_mis)/num_trials
+                
+    print('Number of dMM neurons:', nd)
+    print('Number of hMM neurons:', nh)
+    print('Number of unclassified neurons:', N - nd - nh)
 
     # Fit linear model to dMM data
     X = sm.add_constant(dMM_mot)

@@ -36,15 +36,14 @@ def layer_activation(motor_based_predicted_flow, observed_flow, v_offset, N):
 def experiment():
     N = 100 # Number of neurons in a population code
     num_trials = 10 # Number of different speed values
-    threshold = 0.05 # Threshold for defining dMM and hMM neurons
+    threshold = 0.02 # Threshold for defining dMM and hMM neurons
     num_pc = 3 # Number of different population codes
-    v_offset = 0.76 # Offset of the velocity range of the population code
+    offset_vec = np.array([1.07, 0.6]) # Offset of the velocity range of the population code
     
     neuron_ind = [i for i in range(1, N + 1)]
     motor_flow = np.zeros(num_trials*num_pc)
     sum_mismatch = np.zeros(N*num_pc)
     all_mismatch = []
-    offset_vec = np.array([v_offset, 0])
 
     # Create basis vectors for the 1-d projections of the different population codes
     basis_vec = []
@@ -97,8 +96,12 @@ def experiment():
                 hMM_mot.append(motor_flow[m])
                 hMM_mis.append(all_mismatch[m][i])
 
-    print('Number of dMM neurons:',len(dMM_mis)/num_trials)
-    print('Number of hMM neurons:',len(hMM_mis)/num_trials)
+    nd = len(dMM_mis)/num_trials
+    nh = len(hMM_mis)/num_trials
+    
+    print('Number of dMM neurons:', nd)
+    print('Number of hMM neurons:', nh)
+    print('Number of unclassified neurons:', N*num_pc - nd - nh)
     
     # Fit linear model to dMM data
     X = sm.add_constant(dMM_mot)
