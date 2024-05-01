@@ -8,7 +8,8 @@ def main():
     experiment()
 
     
-# Create a population code with N neurons, centered at preferred_x, encoding the variable x
+# Create a population code with N neurons, encoding the variable x.
+# X_offset shifts the encoded range.
 def code(x, x_offset, N):
     xmin = -1.0
     xrange = 2.0
