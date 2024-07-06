@@ -269,7 +269,7 @@ def experiment():
     fig, ax = plt.subplots(figsize=(8, 5))
 
     # Add vertical dashed line at x=0
-    plt.axvline(x=0, linestyle='--', color='gray')
+    plt.axvline(x=0, linestyle='--', color='gray', linewidth=2)
     
     # Plot each vertical box plot with individual data points
     for i, d in enumerate(data):
@@ -277,7 +277,7 @@ def experiment():
         position = i + 1
     
         # Plot box plot
-        sns.boxplot(x=d, y=np.ones_like(d)*position, orient='h', color='lightgray', whis=[0, 100], width=0.3, boxprops=dict(linewidth=2.5), medianprops=dict(linewidth=2.5))
+        sns.boxplot(x=d, y=np.ones_like(d)*position, orient='h', color='lightgray', whis=[0, 100], width=0.4, boxprops=dict(linewidth=2.5), medianprops=dict(linewidth=3.5), whiskerprops=dict(linewidth=2.5), capprops=dict(linewidth=2.5))
     
         # Plot strip plot of individual data points
         sns.stripplot(x=d, y=np.ones_like(d)*position, orient='h', color='black', alpha=1, jitter=True)
