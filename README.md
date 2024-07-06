@@ -6,7 +6,7 @@ To run the code for the main article, use the following command:
 ```bash
 python mismatch_response_simulation1.py
 ```
-Close a figure to see the next figure. This code produces five figures.
+Close a figure to see the next figure. This code produces five figures. To test the variant with randomly distributed preferred values in a population code, set the variable `uniform_code` to `False` in the function `experiment`.
 
 To run the code for the supplementary information, use the following command:
 ```bash
