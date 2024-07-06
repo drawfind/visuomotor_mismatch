@@ -86,16 +86,20 @@ def experiment():
     dMM_mis = []
     hMM_mot = []
     hMM_mis = []
+    dMM_ind = []
+    hMM_ind = []
        
     for m in range(num_trials):
         for i in range(N*num_pc):
             if sum_mismatch[i] > threshold*num_trials:
                 dMM_mot.append(motor_flow[m])
                 dMM_mis.append(all_mismatch[m][i])
+                dMM_ind.append(i) # keep track of neural index
                 
             if sum_mismatch[i] < -threshold*num_trials:
                 hMM_mot.append(motor_flow[m])
                 hMM_mis.append(all_mismatch[m][i])
+                hMM_ind.append(i) # keep track of neural index
 
     nd = len(dMM_mis)/num_trials
     nh = len(hMM_mis)/num_trials
@@ -112,7 +116,15 @@ def experiment():
     # Plot dMM data
     plt.figure(figsize=(8, 6))
     plt.scatter(dMM_mot, dMM_mis, label='dMM', marker='o', facecolors='none', edgecolors='brown')
-    plt.plot(X[:,1], result.fittedvalues, 'k--')
+
+    # Connect points with the same index
+    unique_indices = set(dMM_ind)
+    for idx in unique_indices:
+        x_points = [dMM_mot[i] for i in range(len(dMM_mot)) if dMM_ind[i] == idx]
+        y_points = [dMM_mis[i] for i in range(len(dMM_mis)) if dMM_ind[i] == idx]
+        plt.plot(x_points, y_points, color='brown')
+    
+    #plt.plot(X[:,1], result.fittedvalues, 'k--')
     plt.xlabel('Locomotion Speed', fontsize=16)
     plt.ylabel('Mismatch Response', fontsize=16)
     plt.xticks(fontsize=14)
@@ -132,7 +144,15 @@ def experiment():
     # Plot hMM data
     plt.figure(figsize=(8, 6))
     plt.scatter(hMM_mot, hMM_mis, label='hMM', marker='o', facecolors='none', edgecolors='darkgreen')
-    plt.plot(X[:,1], result.fittedvalues, 'k--')
+
+    # Connect points with the same index
+    unique_indices = set(hMM_ind)
+    for idx in unique_indices:
+        x_points = [hMM_mot[i] for i in range(len(hMM_mot)) if hMM_ind[i] == idx]
+        y_points = [hMM_mis[i] for i in range(len(hMM_mis)) if hMM_ind[i] == idx]
+        plt.plot(x_points, y_points, color='darkgreen')
+    
+    #plt.plot(X[:,1], result.fittedvalues, 'k--')
     plt.xlabel('Locomotion Speed', fontsize=16)
     plt.ylabel('Mismatch Response', fontsize=16)
     plt.xticks(fontsize=14)
