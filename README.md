@@ -6,7 +6,7 @@ To run the code for the main article, use the following command:
 ```bash
 python mismatch_response_simulation1.py
 ```
-Close a figure to see the next figure. This code produces three figures.
+Close a figure to see the next figure. This code produces five figures.
 
 To run the code for the supplementary information, use the following command:
 ```bash
