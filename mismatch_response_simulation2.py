@@ -1,3 +1,5 @@
+# (c) 2023-2024 Heiko Hoffmann
+
 import numpy as np
 import math
 import matplotlib.pyplot as plt
